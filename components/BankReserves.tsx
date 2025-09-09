@@ -153,93 +153,218 @@ export default function BankReserves() {
   }, [fin]);
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold mb-4">Bank Reserves</h1>
-
-      <input
-        value={query}
-        onChange={(e) => {
-          setShowSuggestions(true); // typing re-enables autosuggest
-          setQuery(e.target.value);
-        }}
-        placeholder="Type a bank name…"
-        className="w-full border rounded px-3 py-2 mb-3"
-      />
-
-      {suggestions.length > 0 && (
-        <div className="border rounded mb-3">
-          {suggestions.map((s) => {
-            const label = `${s.NAME} (${s.CITY}, ${s.STNAME})`;
-            return (
-              <button
-                key={s.CERT}
-                onClick={() => {
-                  setQuery(label); // fill full label (Name + City, State)
-                  setShowSuggestions(false); // hide autosuggest after selection
-                  setSuggestions([]);
-                  setShowRaw(false);
-                  loadFinancials(s.CERT);
-                }}
-                className="block w-full text-left px-3 py-2 hover:bg-slate-100"
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {error && <div className="text-red-600 mb-3">{error}</div>}
-      {loading && <div className="mb-3">Loading…</div>}
-
-      {fin && (
-        <div className="border rounded p-4">
-          <div className="flex items-baseline justify-between">
-            <h2 className="font-semibold text-xl">{fin.NAME}</h2>
-            <button
-              className="text-xs text-slate-500 underline"
-              onClick={() => setShowRaw((v) => !v)}
-            >
-              {showRaw ? "Hide JSON" : "Show JSON"}
-            </button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Professional Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                  <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">Bank Reserves</h1>
+                <p className="text-sm text-gray-500">FDIC Financial Data Analytics</p>
+              </div>
+            </div>
+            <div className="hidden md:flex items-center space-x-4">
+              <span className="text-sm text-gray-500">Powered by FDIC API</span>
+            </div>
           </div>
-
-          <p className="text-sm text-slate-600 mb-2">
-            As of {formatRepdte(fin.REPDTE)}
-          </p>
-
-          <ul className="space-y-1">
-            <li>
-              <strong>CHBAL (Cash & balances due):</strong>{" "}
-              {fmtMoney(fin.CHBAL)}
-            </li>
-            <li>
-              <strong>CHFRB (Balances at Fed):</strong> {fmtMoney(fin.CHFRB)}
-            </li>
-            <li>
-              <strong>LIAB (Total liabilities):</strong> {fmtMoney(fin.LIAB)}
-            </li>
-            <li>
-              <strong>Liquidity ratio (CHBAL ÷ LIAB):</strong>{" "}
-              {liquidityRatio != null
-                ? `${(liquidityRatio * 100).toFixed(2)}%`
-                : "—"}
-            </li>
-            <li>
-              <strong>Fed balances ÷ liabilities (CHFRB ÷ LIAB):</strong>{" "}
-              {fedOnlyRatio != null
-                ? `${(fedOnlyRatio * 100).toFixed(2)}%`
-                : "—"}
-            </li>
-          </ul>
-
-          {showRaw && (
-            <pre className="mt-4 text-xs overflow-auto bg-slate-50 p-3 rounded">
-              {JSON.stringify(fin, null, 2)}
-            </pre>
-          )}
         </div>
-      )}
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* Search Section */}
+        <div className="bg-white rounded-xl shadow-sm border p-6 mb-8">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">Search Banks</h2>
+            <p className="text-gray-600">Find financial data and reserves information for FDIC-insured institutions</p>
+          </div>
+          
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              value={query}
+              onChange={(e) => {
+                setShowSuggestions(true);
+                setQuery(e.target.value);
+              }}
+              placeholder="Enter bank name (e.g., Chase, Wells Fargo, Bank of America)..."
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-gray-900 placeholder-gray-500"
+            />
+          </div>
+        </div>
+
+        {/* Enhanced Suggestions Dropdown */}
+        {suggestions.length > 0 && (
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 mb-6 overflow-hidden">
+            <div className="px-4 py-2 bg-gray-50 border-b">
+              <p className="text-sm font-medium text-gray-700">Search Results</p>
+            </div>
+            <div className="max-h-64 overflow-y-auto">
+              {suggestions.map((s, index) => {
+                const label = `${s.NAME} (${s.CITY}, ${s.STNAME})`;
+                return (
+                  <button
+                    key={s.CERT}
+                    onClick={() => {
+                      setQuery(label);
+                      setShowSuggestions(false);
+                      setSuggestions([]);
+                      setShowRaw(false);
+                      loadFinancials(s.CERT);
+                    }}
+                    className={`block w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors duration-150 border-b border-gray-100 last:border-b-0 group ${
+                      index === 0 ? 'bg-blue-25' : ''
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-900 group-hover:text-blue-700">{s.NAME}</p>
+                        <p className="text-sm text-gray-500">{s.CITY}, {s.STNAME}</p>
+                      </div>
+                      <div className="text-xs text-gray-400 font-mono">CERT #{s.CERT}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Enhanced Error and Loading States */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <p className="text-red-800 font-medium">Error Loading Data</p>
+            </div>
+            <p className="text-red-700 mt-1">{error}</p>
+          </div>
+        )}
+        
+        {loading && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-3"></div>
+              <p className="text-blue-800 font-medium">Loading financial data...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Professional Bank Data Display */}
+        {fin && (
+          <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-semibold text-white">{fin.NAME}</h2>
+                  <p className="text-blue-100 text-sm">
+                    Financial Data as of {formatRepdte(fin.REPDTE)}
+                  </p>
+                </div>
+                <button
+                  className="bg-blue-500 hover:bg-blue-400 text-white px-3 py-1 rounded-lg text-xs font-medium transition-colors duration-200"
+                  onClick={() => setShowRaw((v) => !v)}
+                >
+                  {showRaw ? "Hide JSON" : "Show JSON"}
+                </button>
+              </div>
+            </div>
+
+            {/* Financial Data Grid */}
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {/* Cash & Balances */}
+                <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-green-800">Cash & Balances Due</h3>
+                    <svg className="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4z" />
+                      <path d="M6 6a2 2 0 012-2h8a2 2 0 012 2v6a2 2 0 01-2 2H8a2 2 0 01-2-2V6z" />
+                    </svg>
+                  </div>
+                  <p className="text-2xl font-bold text-green-900">${fmtMoney(fin.CHBAL)}</p>
+                  <p className="text-xs text-green-600 mt-1">CHBAL</p>
+                </div>
+
+                {/* Fed Balances */}
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-blue-800">Fed Balances</h3>
+                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <p className="text-2xl font-bold text-blue-900">${fmtMoney(fin.CHFRB)}</p>
+                  <p className="text-xs text-blue-600 mt-1">CHFRB</p>
+                </div>
+
+                {/* Total Liabilities */}
+                <div className="bg-red-50 rounded-lg p-4 border border-red-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-sm font-medium text-red-800">Total Liabilities</h3>
+                    <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <p className="text-2xl font-bold text-red-900">${fmtMoney(fin.LIAB)}</p>
+                  <p className="text-xs text-red-600 mt-1">LIAB</p>
+                </div>
+              </div>
+
+              {/* Ratio Analysis */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Liquidity Analysis</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Liquidity Ratio</h4>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {liquidityRatio != null
+                        ? `${(liquidityRatio * 100).toFixed(2)}%`
+                        : "—"}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">Cash & Balances ÷ Total Liabilities</p>
+                  </div>
+                  
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-gray-700 mb-2">Fed Reserves Ratio</h4>
+                    <p className="text-3xl font-bold text-gray-900">
+                      {fedOnlyRatio != null
+                        ? `${(fedOnlyRatio * 100).toFixed(2)}%`
+                        : "—"}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1">Fed Balances ÷ Total Liabilities</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Raw JSON Display */}
+              {showRaw && (
+                <div className="border-t mt-6 pt-6">
+                  <h3 className="text-sm font-medium text-gray-900 mb-3">Raw API Response</h3>
+                  <pre className="text-xs overflow-auto bg-gray-900 text-green-400 p-4 rounded-lg max-h-64">
+                    {JSON.stringify(fin, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
