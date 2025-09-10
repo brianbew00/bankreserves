@@ -5,10 +5,10 @@ import React, { useEffect, useMemo, useState } from "react";
 const API_BASE = "https://banks.data.fdic.gov";
 
 /* ---------------- helpers ---------------- */
-async function fdicGet(
+async function fdicGet<T>(
   path: string,
   params: Record<string, string | number | undefined>
-): Promise<any> {
+): Promise<T> {
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
     if (v != null && v !== "") qs.append(k, String(v));
@@ -30,7 +30,7 @@ async function fdicGet(
       }`
     );
   }
-  return res.json();
+  return res.json() as Promise<T>;
 }
 
 type Institution = {
@@ -98,7 +98,7 @@ export default function BankReserves() {
       }
       setError(null);
       try {
-        const data = await fdicGet("institutions", {
+        const data = await fdicGet<{ data: { data: Institution }[] }>("institutions", {
           search: `NAME:"${query.replace(/"/g, '\\"')}"`,
           fields: "CERT,NAME,CITY,STNAME",
           limit: 8,
@@ -127,7 +127,7 @@ export default function BankReserves() {
     setFin(null);
     try {
       const fields = ["NAME", "CERT", "REPDTE", "CHBAL", "CHFRB", "LIAB"].join(",");
-      const data = await fdicGet("financials", {
+      const data = await fdicGet<{ data: { data: FinancialsRecord }[] }>("financials", {
         filters: `CERT:${cert}`,
         fields,
         sort_by: "REPDTE",
